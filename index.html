@@ -589,72 +589,104 @@ iframe {
     
     
 
-    
-    <script>
+<script>    
+      // ========== SOUND CONTROL ==========
+    let audioReady = false;
+    let lastScrollTime = 0;
+    const scrollThreshold = 100;
+    const tickSound = document.getElementById('tickSound');
+    const clickSound = document.getElementById('clickSound');
+
+    // Unlock audio on first interaction
+    function unlockAudio() {
+        if (!audioReady) {
+            // Create and play silent audio to unlock sound
+            const silentSound = new Audio();
+            silentSound.volume = 0;
+            silentSound.play()
+                .then(() => {
+                    audioReady = true;
+                    // Play gentle intro sound
+                    tickSound.volume = 0.2;
+                    tickSound.play().catch(e => console.log("Intro sound:", e));
+                })
+                .catch(e => console.log("Audio unlock needed:", e));
+        }
+    }
+
+    // ========== SOUND FUNCTIONS ==========
     function playClickSound() {
-        const clickSound = document.getElementById('clickSound');
+        if (!audioReady) unlockAudio();
         clickSound.currentTime = 0;
         clickSound.play().catch(e => console.log("Click sound error:", e));
     }
-    
-    // Add click sound to all links
+
+    function playTick(deltaY = 0) {
+        if (!audioReady) return;
+        
+        tickSound.currentTime = 0;
+        tickSound.volume = Math.min(0.3 + Math.abs(deltaY)/1000, 0.8);
+        tickSound.play().catch(e => console.log("Tick sound error:", e));
+    }
+
+    // ========== EVENT HANDLERS ==========
+    // Initialize on load
+    window.addEventListener('load', () => {
+        // Try to play gentle sound (may fail until interaction)
+        tickSound.volume = 0.2;
+        tickSound.play().catch(() => {
+            console.log("Waiting for user interaction...");
+        });
+
+        // Create visual cue
+        const cue = document.createElement('div');
+        cue.innerHTML = 'Scroll to hear sound effects';
+        cue.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            color: #ebff00;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            animation: fadeOut 3s forwards 5s;
+            z-index: 1000;
+            pointer-events: none;
+        `;
+        document.body.appendChild(cue);
+    });
+
+    // Scroll handler
+    window.addEventListener('wheel', (e) => {
+        unlockAudio(); // Try to unlock audio
+        
+        const now = Date.now();
+        if (now - lastScrollTime > scrollThreshold) {
+            playTick(e.deltaY);
+            lastScrollTime = now;
+        }
+    });
+
+    // Click handlers
     document.querySelectorAll('a').forEach(link => {
         link.addEventListener('click', playClickSound);
     });
 
-    // Make all links open in new tab (except those already set to _blank)
+    // Open links in new tab
     document.querySelectorAll('a[href^="http"]:not([target="_blank"])').forEach(link => {
         link.setAttribute('target', '_blank');
     });
 
-    // Scroll sound effects
-    let lastScrollTime = 0;
-    let scrollTimeout;
-    const tickSound = document.getElementById('tickSound');
-    const scrollThreshold = 100;
-
-    function playTick() {
-        tickSound.currentTime = 0;
-        tickSound.volume = 0.3;
-        tickSound.play().catch(e => console.log("Tick sound error:", e));
-    }
-
-    window.addEventListener('wheel', (e) => {
-        const now = Date.now();
-        
-        if (now - lastScrollTime > scrollThreshold) {
-            playTick();
-            lastScrollTime = now;
-            
-            const speed = Math.abs(e.deltaY);
-            tickSound.volume = Math.min(0.1 + speed/1000, 0.8);
+    // Add fadeOut animation
+    const style = document.createElement('style');
+    style.innerHTML = `
+        @keyframes fadeOut {
+            to { opacity: 0; }
         }
-        
-        clearTimeout(scrollTimeout);
-        scrollTimeout = setTimeout(() => tickSound.pause(), 200);
-    });
-
-
-
-
-// Play gentle sound on load (after user interaction)
-window.addEventListener('load', () => {
-  const tickSound = document.getElementById('tickSound');
-  tickSound.volume = 0.2; // Quieter initial sound
-  tickSound.play().catch(() => {
-    // Will fail until user interacts - that's normal
-  });
-});
-
-
-
-
-
-
-
-
-
-        
+    `;
+    document.head.appendChild(style);
 
 </script>
 
