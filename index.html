@@ -55,6 +55,29 @@
             cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="%23ebff00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg>'), auto;
         }
 
+
+
+
+body::after {
+  content: "Scroll to hear sound effects";
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.7);
+  color: #ebff00;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  animation: fadeOut 3s forwards 5s;
+}
+
+@keyframes fadeOut {
+  to { opacity: 0; }
+}
+
+        
+
         
 
         /* Popup Styles */
@@ -611,6 +634,28 @@ iframe {
         clearTimeout(scrollTimeout);
         scrollTimeout = setTimeout(() => tickSound.pause(), 200);
     });
+
+
+
+
+// Play gentle sound on load (after user interaction)
+window.addEventListener('load', () => {
+  const tickSound = document.getElementById('tickSound');
+  tickSound.volume = 0.2; // Quieter initial sound
+  tickSound.play().catch(() => {
+    // Will fail until user interacts - that's normal
+  });
+});
+
+
+
+
+
+
+
+
+
+        
 
 </script>
 
